@@ -174,7 +174,7 @@ void loop() {
     //----------------------------------------------------
     Serial.println("Transmitting Sensor Data...");
         
-    String pkt = String("T:"+(String)tem_value + ";H:" + (String)moisture_value + ";N:" + (String)N_value + ";P:" + (String)P_value + ";K:" + (String)K_value);
+    String pkt = String("T:"+(String)tem_value + ";H:" + (String)moisture_value + ";PH:" + (String)ph_value + ";N:" + (String)N_value + ";P:" + (String)P_value + ";K:" + (String)K_value);
 
     int state = radio.transmit(pkt);
     if (state == ERR_NONE)
