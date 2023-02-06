@@ -87,12 +87,6 @@ void setup()
   }
   Serial.println("SSD1306 found");
 
-  // Serial.println("Writing initial test for sensor...");
-  // MySerial.write(test_command,8);
-  // delay(1000);
-  // MySerial.write(test_command,8);
-  // delay(1000);
-
   //----------------------------------------------------
   Serial.println("SPI Begin...");
   SPI.begin(SPI_SCK, SPI_MISO, SPI_MOSI);
@@ -113,6 +107,9 @@ void setup()
     while (true)
       ;
   }
+  //--- writing init test_command
+  Serial.println("Writing initial test for sensor...");
+  writeInitTestCommand();
 }
 
 void loop()
@@ -192,7 +189,6 @@ void callbackWriteStatus()
 void getSensorValue()
 {
   Serial.println("Getting Sensor Value based on test_command:");
-
   Serial.println("Moist, Temp, pH:");
 
   writeInitTestCommand();
@@ -211,7 +207,7 @@ void getSensorValue()
   value_show(moisture_value, tem_value, ph_value);
 
   delay(1000);
-  Serial.println("N, P, K...");
+  Serial.println("N, P, K:");
   N_value = CaculateValue((int)test_response[11], (int)test_response[12]);
   P_value = CaculateValue((int)test_response[13], (int)test_response[14]);
   K_value = CaculateValue((int)test_response[15], (int)test_response[16]);
