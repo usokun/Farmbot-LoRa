@@ -1,77 +1,83 @@
+#include <RadioLib.h>
 #include <SPI.h>
-#include <LoRa.h>
 
-#define LORA_RST 9
-#define LORA_CLK 13
-#define LORA_MISO 12
-#define LORA_MOSI 11
-#define LORA_CS 10
-
-#define DIO0 2
-#define DIO1 6
-
-#define FREQUENCY 915.0       
-#define BANDWIDTH 125.0
-#define SPREADING_FACTOR 9
-#define CODING_RATE 7
-#define OUTPUT_POWER 10
-#define PREAMBLE_LEN 8
-#define GAIN 0
+// SX1276 has the following connections:
+// NSS pin:   10
+// DIO0 pin:  2
+// RESET pin: 9
+// DIO1 pin:  6
+SX1276 radio = new Module(10, 2, 9, 6);
 
 void setup() {
   Serial.begin(9600);
 
-  LoRa.setPins(LORA_CS, LORA_RST, DIO0);
-
-  LoRa.setFrequency(FREQUENCY);
-  LoRa.setSignalBandwidth(BANDWIDTH);
-  LoRa.setSpreadingFactor(SPREADING_FACTOR);
-  LoRa.setCodingRate4(CODING_RATE);
-  LoRa.setTxPower(OUTPUT_POWER);
-  LoRa.setPreambleLength(PREAMBLE_LEN);
-  LoRa.setGain(GAIN);
-  LoRa.setSyncWord(0x12);
-
-  while (!Serial);
-
-  Serial.println("LoRa Receiver Callback");
-
-  if (!LoRa.begin(FREQUENCY)) {
-    Serial.println("Starting LoRa failed!");
-    while (1);
-  }else{
-    Serial.println("Starting Success!");
-
+  // initialize SX1262 with default settings
+  Serial.print(F("[SX1276] Initializing ... "));
+  //int state = radio.begin();
+  int state = radio.begin(915.0, 125.0, 9, 7, 0x12, 10, 8, 0);
+  if (state == ERR_NONE) {
+    Serial.println(F("success!"));
+  } else {
+    Serial.print(F("failed, code "));
+    Serial.println(state);
+    while (true);
   }
-
-  // Uncomment the next line to disable the default AGC and set LNA gain, values between 1 - 6 are supported
-  // LoRa.setGain(6);
-  
-  // register the receive callback
-  // LoRa.onReceive(onReceive);
-
-  // // put the radio into receive mode
-  // Serial.println("Receive mode lora:");
-  // LoRa.receive();
 }
 
 void loop() {
-  delay(2500);
-  Serial.println("Trying to receive data:");
-  LoRa.onReceive(onReceive);
-  LoRa.receive();
-}
+  delay(500);
+  Serial.print(F("[SX1262] Waiting for incoming transmission ... "));
 
-void onReceive(int packetSize) {
-  // received a packet
-  Serial.print("Received packet '");
+  // you can receive data as an Arduino String
+  // NOTE: receive() is a blocking method!
+  //       See example ReceiveInterrupt for details
+  //       on non-blocking reception method.
+  String str;
+  int state = radio.receive(str);
 
-  // read packet
-  for (int i = 0; i < packetSize; i++) {
-    Serial.print((char)LoRa.read());
+  // you can also receive data as byte array
+/*
+  byte byteArr[8];
+  int state = radio.receive(byteArr, 8);
+*/
+
+  if (state == ERR_NONE) {
+    // packet was successfully received
+    Serial.println(F("success!"));
+
+    // print the data of the packet
+    Serial.print(F("[SX1276] Data:\t\t"));
+    Serial.println(str);
+//    for (int i = 0; i < 8; i++)
+//    {
+//      Serial.print(byteArr[i]);
+//    }
+//    Serial.println();
+
+    // print the RSSI (Received Signal Strength Indicator)
+    // of the last received packet
+    Serial.print(F("[SX1276] RSSI:\t\t"));
+    Serial.print(radio.getRSSI());
+    Serial.println(F(" dBm"));
+
+    // print the SNR (Signal-to-Noise Ratio)
+    // of the last received packet
+    Serial.print(F("[SX1276] SNR:\t\t"));
+    Serial.print(radio.getSNR());
+    Serial.println(F(" dB"));
+
+  } else if (state == ERR_RX_TIMEOUT) {
+    // timeout occurred while waiting for a packet
+    Serial.println(F("timeout!"));
+
+  } else if (state == ERR_CRC_MISMATCH) {
+    // packet was received, but is malformed
+    Serial.println(F("CRC error!"));
+
+  } else {
+    // some other error occurred
+    Serial.print(F("failed, code "));
+    Serial.println(state);
+
   }
-
-  // print RSSI of packet
-  Serial.print("' with RSSI ");
-  Serial.println(LoRa.packetRssi());
 }

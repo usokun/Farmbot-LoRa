@@ -173,12 +173,15 @@ void loop() {
 
     //----------------------------------------------------
     Serial.println("Transmitting Sensor Data...");
-    int state = radio.transmit("T:"+(String)tem_value + "  H:" + (String)moisture_value);
+        
+    String pkt = String("T:"+(String)tem_value + ";H:" + (String)moisture_value + ";N:" + (String)N_value + ";P:" + (String)P_value + ";K:" + (String)K_value);
+
+    int state = radio.transmit(pkt);
     if (state == ERR_NONE)
       {
           // the packet was successfully transmitted
           Serial.println(F("Sensor Data was SUCCESSFULLY TRANSMITTED!"));
-
+          Serial.println(pkt);
           // print measured data rate
           Serial.print(F("[SX1278] Datarate:\t"));
           Serial.print(radio.getDataRate());
