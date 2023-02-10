@@ -1,9 +1,6 @@
+#include <Adafruit_BMP280.h>
 #include <ESP8266WiFi.h>
 #include <PubSubClient.h>
-
-#define pinSensor1 0
-#define pinSensor2 1
-#define delaytime 300000
 
 // MQTT Broker
 const char *mqtt_broker = "103.163.139.230";
@@ -12,17 +9,17 @@ const char *mqtt_username = "farmbot-mqtt";
 const char *mqtt_password = "farmbot0123";
 const int mqtt_port = 1883;
 
+String nodeNumber = "4"; // which node? pls declare: 1-3: soil moist sensor ; 4 air-temp&pressure sensor
+
 WiFiClient espClient;
 PubSubClient client(espClient);
 
-String nodeNumber = "1"; // which node? pls declare: 1-3: soil moist sensor ; 4 air-temp&pressure sensor
-double sensorV1;
-double sensorV2;
+Adafruit_BMP280 bmp; // I2C
 
 void connectToWifi()
 {
- WiFi.begin("Ini Wifi", "satusampaitiga");
-  // WiFi.begin("Redmi", "bruh12345");
+//  WiFi.begin("Ini Wifi", "satusampaitiga");
+  WiFi.begin("Redmi", "bruh12345");
   Serial.print("Connecting to wifi");
   while (WiFi.status() != WL_CONNECTED)
   {
@@ -67,16 +64,29 @@ void callback(char *topic, byte *payload, unsigned int length) {
   Serial.println("-----------------------");
 }
 
-void setup(){
+void setup() {
     Serial.begin(9600);
-
     connectToWifi();  
     client.setServer(mqtt_broker, mqtt_port);
     client.setCallback(callback);
     connectToMQTTBroker();
+    Serial.println(F("BMP280 Sensor"));
+
+  if (!bmp.begin(BMP280_ADDRESS_ALT, BMP280_CHIPID)) {
+    Serial.println(F("Could not find a valid BMP280 sensor, check wiring or "
+                      "try a different address!"));
+    while (1) delay(10);
+  }
+
+  /* Default settings from datasheet. */
+  bmp.setSampling(Adafruit_BMP280::MODE_NORMAL,     /* Operating Mode. */
+                  Adafruit_BMP280::SAMPLING_X2,     /* Temp. oversampling */
+                  Adafruit_BMP280::SAMPLING_X16,    /* Pressure oversampling */
+                  Adafruit_BMP280::FILTER_X16,      /* Filtering. */
+                  Adafruit_BMP280::STANDBY_MS_500); /* Standby time. */
 }
 
-void loop(){
+void loop() {
     if(WiFi.status() != WL_CONNECTED){
         connectToWifi();
     }
@@ -84,19 +94,25 @@ void loop(){
     if (!client.connected()) {
         connectToMQTTBroker();
     }
+    double temp = bmp.readTemperature();
+    double press = bmp.readPressure();
 
-    sensorV1 = digitalRead(pinSensor1);
-    sensorV2 = digitalRead(pinSensor2);
-    double val_avg = (sensorV1 + sensorV2)/2;
-    String value_to_publish = String("SMoist:" + nodeNumber + ":" + val_avg );
+    String temp_v = String(temp);
+    String press_v = String(press);
+    // jenis_sensor:nodeNumber:value;jenis_sensor:nodeNumber:value
+    String value_to_publish = "ATemp:" + nodeNumber + ":" + temp_v + ";" + "APress:" + nodeNumber + ":" + press_v;
 
-    Serial.println("Value 1, Value 2: ");
-    Serial.print(sensorV1);
-    Serial.print(", ");
-    Serial.print(sensorV2);
+    // Serial.print(F("Temperature = "));
+    // Serial.print(temp);
+    // Serial.println(" *C");
 
+    // Serial.print(F("Pressure = "));
+    // Serial.print(press);
+    // Serial.println(" Pa");
+    Serial.print(value_to_publish);
+    Serial.println();
+    
     client.publish(topic, value_to_publish.c_str());
     client.loop();
-    delay(delaytime);
-
+    delay(10000);
 }
