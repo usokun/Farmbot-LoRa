@@ -1,15 +1,22 @@
 #include <RadioLib.h>
 #include <SPI.h>
+#include <SoftwareSerial.h>
 
 // SX1276 has the following connections:
 // NSS pin:   10
 // DIO0 pin:  2
 // RESET pin: 9
 // DIO1 pin:  6
+
+#define rxPin 4
+#define txPin 5
+
 SX1276 radio = new Module(10, 2, 9, 6);
+SoftwareSerial uartSerial (rxPin, txPin);
 
 void setup() {
-  Serial.begin(9600);
+  Serial.begin(115200);
+  uartSerial.begin(115200);
 
   // initialize SX1262 with default settings
   Serial.print(F("[SX1276] Initializing ... "));
@@ -34,6 +41,9 @@ void loop() {
   //       on non-blocking reception method.
   String str;
   int state = radio.receive(str);
+  /*
+      Ekspektasi data yang nyampe:  T:29.00;H:66.90;N:31;P:42;K=104
+  */
 
   // you can also receive data as byte array
 /*
@@ -60,11 +70,20 @@ void loop() {
     Serial.print(radio.getRSSI());
     Serial.println(F(" dBm"));
 
-    // print the SNR (Signal-to-Noise Ratio)
-    // of the last received packet
+  // print the SNR (Signal-to-Noise Ratio)
+  // of the last received packet
     Serial.print(F("[SX1276] SNR:\t\t"));
     Serial.print(radio.getSNR());
     Serial.println(F(" dB"));
+  
+  //Write data to serial
+  char* buf = (char*) malloc(sizeof(char)*str.length()+1);
+  str.toCharArray(buf, str.length()+1);
+
+  Serial.print(buf);
+  Serial.println("printing written data to uartSerial... ");
+  uartSerial.print(buf);
+  free(buf);
 
   } else if (state == ERR_RX_TIMEOUT) {
     // timeout occurred while waiting for a packet
