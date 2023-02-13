@@ -90,7 +90,7 @@ void loop(){
   }
 
   /*
-      Ekspektasi data yang nyampe:  T:29.00;H:66.90;N:31;P:42;K=104
+      Ekspektasi data yang nyampe:  T:28.44;H:56.91;PH:7.95;N:31:P:42:K:104/1
   */
 
   if (Serial.available() > 0) 

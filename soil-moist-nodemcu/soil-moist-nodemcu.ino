@@ -1,9 +1,9 @@
 #include <ESP8266WiFi.h>
 #include <PubSubClient.h>
 
-#define pinSensor1 0
-#define pinSensor2 1
-#define delaytime 300000
+#define delaytime 5000
+
+
 
 // MQTT Broker
 const char *mqtt_broker = "103.163.139.230";
@@ -15,14 +15,16 @@ const int mqtt_port = 1883;
 WiFiClient espClient;
 PubSubClient client(espClient);
 
-String nodeNumber = "1"; // which node? pls declare: 1-3: soil moist sensor ; 4 air-temp&pressure sensor
+String groupID = "2"; // groupID: soil-moist-sensor 1~2 = group 2 ; 3~4 = group 3 ; 5~6 = group 4
 double sensorV1;
 double sensorV2;
+const int digitalPin_1 = 5;
+const int digitalPin_2 = 4;
 
 void connectToWifi()
 {
- WiFi.begin("Ini Wifi", "satusampaitiga");
-  // WiFi.begin("Redmi", "bruh12345");
+//  WiFi.begin("Ini Wifi", "satusampaitiga");
+  WiFi.begin("Redmi", "bruh12345");
   Serial.print("Connecting to wifi");
   while (WiFi.status() != WL_CONNECTED)
   {
@@ -40,7 +42,7 @@ void connectToWifi()
 void connectToMQTTBroker() {
   while (!client.connected())
     {
-      String client_id = "farmbot-nodemcu-" + nodeNumber;
+      String client_id = "farmbot-soil-moist-" + groupID;
       client_id += String(WiFi.macAddress());
       Serial.printf("The client %s connects to the Agribot MQTT Broker \n", client_id.c_str());
       if (client.connect(client_id.c_str(), mqtt_username, mqtt_password))
@@ -68,8 +70,7 @@ void callback(char *topic, byte *payload, unsigned int length) {
 }
 
 void setup(){
-    Serial.begin(9600);
-
+    Serial.begin(9600);    
     connectToWifi();  
     client.setServer(mqtt_broker, mqtt_port);
     client.setCallback(callback);
@@ -85,15 +86,20 @@ void loop(){
         connectToMQTTBroker();
     }
 
-    sensorV1 = digitalRead(pinSensor1);
-    sensorV2 = digitalRead(pinSensor2);
+    sensorV1 = digitalRead(digitalPin_1);
+    sensorV2 = digitalRead(digitalPin_2);
     double val_avg = (sensorV1 + sensorV2)/2;
-    String value_to_publish = String("SMoist:" + nodeNumber + ":" + val_avg );
+    // String value_to_publish = String("SMoist:" + nodeNumber + ":" + val_avg );
+    // SMoist:28.21/2
+    String value_to_publish = String("SMoist:" + val_avg + "/" + groupID);
 
-    Serial.println("Value 1, Value 2: ");
+    Serial.println("Value 1, Value 2, Avg Value: ");
     Serial.print(sensorV1);
     Serial.print(", ");
     Serial.print(sensorV2);
+    Serial.print(", ");
+    Serial.print(val_avg);
+    Serial.println();
 
     client.publish(topic, value_to_publish.c_str());
     client.loop();

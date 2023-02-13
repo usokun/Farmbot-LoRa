@@ -9,7 +9,7 @@ const char *mqtt_username = "farmbot-mqtt";
 const char *mqtt_password = "farmbot0123";
 const int mqtt_port = 1883;
 
-String nodeNumber = "4"; // which node? pls declare: 1-3: soil moist sensor ; 4 air-temp&pressure sensor
+String groupID = "5";
 
 WiFiClient espClient;
 PubSubClient client(espClient);
@@ -37,7 +37,7 @@ void connectToWifi()
 void connectToMQTTBroker() {
   while (!client.connected())
     {
-      String client_id = "farmbot-nodemcu-" + nodeNumber;
+      String client_id = "farmbot-air-temp-1";
       client_id += String(WiFi.macAddress());
       Serial.printf("The client %s connects to the Agribot MQTT Broker \n", client_id.c_str());
       if (client.connect(client_id.c_str(), mqtt_username, mqtt_password))
@@ -100,15 +100,9 @@ void loop() {
     String temp_v = String(temp);
     String press_v = String(press);
     // jenis_sensor:nodeNumber:value;jenis_sensor:nodeNumber:value
-    String value_to_publish = "ATemp:" + nodeNumber + ":" + temp_v + ";" + "APress:" + nodeNumber + ":" + press_v;
-
-    // Serial.print(F("Temperature = "));
-    // Serial.print(temp);
-    // Serial.println(" *C");
-
-    // Serial.print(F("Pressure = "));
-    // Serial.print(press);
-    // Serial.println(" Pa");
+    // String value_to_publish = "ATemp:" + nodeNumber + ":" + temp_v + ";" + "APress:" + nodeNumber + ":" + press_v;
+    // EXPECTED DATA TO PUBLISH: ATemp:30.12;APress:100312.21/5
+    String value_to_publish = "ATemp:" + temp_v + ";" + "APress:" + press_v + "/" + groupID;
     Serial.print(value_to_publish);
     Serial.println();
     

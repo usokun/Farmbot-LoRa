@@ -54,6 +54,7 @@ int K_value;
 float P_float_value;
 float N_float_value;
 float K_float_value;
+String groupID = "1";
 
 SX1276 radio = new Module(LORA_CS, DIO0, LORA_RST, DIO1, SPI, SPISettings()); // 868Mhz or 915Mhz
 
@@ -129,8 +130,7 @@ void loop()
 
 void transmitData()
 {
-  String pkt = String("T:" + (String)tem_value + ";H:" + (String)moisture_value + ";N:" + (String)N_value + ";P:" + (String)P_value + ";K:" + (String)K_value);
-
+  String pkt = String("T:" + (String)tem_value + ";H:" + (String)moisture_value + ";PH:" + (String)ph_value + ";N:" + (String)N_value + ";P:" + (String)P_value + ";K:" + (String)K_value + "/" + groupID); 
   int state = radio.transmit(pkt);
   if (state == ERR_NONE)
   {
