@@ -18,7 +18,7 @@ void setup() {
   Serial.begin(115200);
   uartSerial.begin(115200);
 
-  // initialize SX1262 with default settings
+  // initialize SX1276 with default settings
   Serial.print(F("[SX1276] Initializing ... "));
   //int state = radio.begin();
   int state = radio.begin(915.0, 125.0, 9, 7, 0x12, 10, 8, 0);
